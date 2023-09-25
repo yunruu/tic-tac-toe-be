@@ -1,11 +1,11 @@
 import "dotenv/config";
 import express from "express";
-import gameRouter from "./routes/game.routes.js";
+import gameSessionRouter from "./routes/game-session.routes.js";
 import playerRouter from "./routes/player.routes.js";
 
 const app = express();
 
-app.use("/game", gameRouter);
+app.use("/game", gameSessionRouter);
 app.use("/player", playerRouter);
 
 export default app;
