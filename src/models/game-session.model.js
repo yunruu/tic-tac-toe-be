@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const gameSessionSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -20,6 +22,7 @@ const gameSessionSchema = new mongoose.Schema({
       true,
       "Each round of a game must have a different player's turn",
     ],
+    default: 0,
   },
   winner: {
     type: String,
