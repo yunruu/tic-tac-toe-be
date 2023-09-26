@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getBoard,
   joinSession,
   leaveSession,
   makeMove,
@@ -8,6 +9,7 @@ import {
 const router = express.Router();
 
 router.route("/").post(joinSession);
+router.route("/:id").get(getBoard);
 router.route("/:id/:pid").patch(leaveSession);
 router.route("/board/:id/:pid").put(makeMove);
 
