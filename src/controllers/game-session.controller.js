@@ -12,9 +12,10 @@ export const checkId = (req, res, next, val) => {
 };
 
 /**
- * @desc Join a game session
+ * @desc Join a game session. If there is no free active game session,
+ * then create a new game session.
  *
- * @returns A game session that user has joined
+ * @returns the game session that user has joined
  */
 export const joinSession = async (req, res) => {
   try {
@@ -68,9 +69,12 @@ export const joinSession = async (req, res) => {
 };
 
 /**
- * Leaves a game session
+ * Leaves a game session. If there are two players in the game session,
+ * then the player leaving automatically loses. If there is only one player
+ * in the game session, then the player leaving leaves the game session and
+ * the game is still active.
  *
- * @returns A game session which the user has left
+ * @returns the game session which the user has left
  */
 export const leaveSession = async (req, res) => {
   try {
