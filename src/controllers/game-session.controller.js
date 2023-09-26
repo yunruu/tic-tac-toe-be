@@ -245,3 +245,23 @@ export const makeMove = async (req, res) => {
     });
   }
 };
+
+export const getBoard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const gameSession = await GameSession.findOne({ id });
+    if (!gameSession) {
+      return res.status(404).json({
+        message: "No game session found with that ID",
+      });
+    }
+    return res.status(200).json({
+      board: gameSession.board,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({
+      message: e,
+    });
+  }
+};
