@@ -20,15 +20,11 @@ export const joinSession = async (req, res) => {
         newGameSession.players = newPlayers;
         await newGameSession.save();
         return res.status(201).json({
-          status: "success",
-          data: {
-            gameSession: newGameSession,
-          },
+          gameSession: newGameSession,
         });
       } catch (err) {
         console.log(err);
         res.status(400).json({
-          status: "error",
           message: err,
         });
       }
@@ -43,16 +39,12 @@ export const joinSession = async (req, res) => {
       }
       await gameSession.save();
       res.status(200).json({
-        status: "success",
-        data: {
-          gameSession,
-        },
+        gameSession,
       });
     }
   } catch (err) {
     console.log(err);
     res.status(400).json({
-      status: "error",
       message: err,
     });
   }
@@ -87,15 +79,11 @@ export const leaveSession = async (req, res) => {
         gameSession.winner = pid === playerOne ? playerTwo : playerOne;
         await gameSession.save();
         return res.status(200).json({
-          status: "success",
-          data: {
-            gameSession,
-          },
+          gameSession,
         });
       } catch (err) {
         console.log(err);
         res.status(400).json({
-          status: "error",
           message: err,
         });
       }
@@ -106,22 +94,17 @@ export const leaveSession = async (req, res) => {
       gameSession.players = [null, null];
       await gameSession.save();
       return res.status(200).json({
-        status: "success",
-        data: {
-          gameSession,
-        },
+        gameSession,
       });
     } catch (err) {
       console.log(err);
       res.status(400).json({
-        status: "error",
         message: err,
       });
     }
   } catch (e) {
     console.log(e);
     res.status(400).json({
-      status: "error",
       message: e,
     });
   }
@@ -202,14 +185,12 @@ export const makeMove = async (req, res) => {
 
     if (!board) {
       return res.status(400).json({
-        status: "error",
         message: "No board provided",
       });
     }
 
     if (board.length !== 9) {
       return res.status(400).json({
-        status: "error",
         message: "Board must have 9 elements",
       });
     }
@@ -218,14 +199,12 @@ export const makeMove = async (req, res) => {
 
     if (!gameSession) {
       return res.status(404).json({
-        status: "error",
         message: "No game session found with that ID",
       });
     }
 
     if (gameSession.winner) {
       return res.status(400).json({
-        status: "error",
         message: "Game is already over",
       });
     }
@@ -240,7 +219,6 @@ export const makeMove = async (req, res) => {
     const isValid = isValidMove(board);
     if (!isValid) {
       return res.status(400).json({
-        status: "error",
         message: "Invalid move",
       });
     }
@@ -250,26 +228,19 @@ export const makeMove = async (req, res) => {
       gameSession.winner = pid;
       await gameSession.save();
       return res.status(200).json({
-        status: "success",
-        data: {
-          gameSession,
-        },
+        gameSession,
       });
     } else {
       gameSession.board = board;
       gameSession.turn = gameSession.turn === 1 ? 2 : 1;
       await gameSession.save();
       return res.status(200).json({
-        status: "success",
-        data: {
-          gameSession,
-        },
+        gameSession,
       });
     }
   } catch (e) {
     console.log(e);
     res.status(400).json({
-      status: "error",
       message: e,
     });
   }
