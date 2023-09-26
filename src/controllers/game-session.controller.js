@@ -136,3 +136,151 @@ export const leaveSession = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Checks if the move is valid.
+ *
+ * @param {Array} board - the game board
+ * @returns true if the move is valid, false otherwise
+ */
+const isValidMove = (board) => {
+  const oneCount = board.filter((element) => element === 1).length;
+  const twoCount = board.filter((element) => element === 2).length;
+
+  if (oneCount - twoCount > 1 || twoCount - oneCount > 1) {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * @desc Checks if the board is a winning board.
+ *
+ * @param {Array} board the board to check
+ * @param {number} turn the player whose turn it is
+ * @returns true if the board is a winning board, false otherwise
+ */
+const isWinningBoard = (board, turn) => {
+  const winningBoards = [
+    [1, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1],
+
+    [1, 0, 0, 1, 0, 0, 1, 0, 0],
+    [0, 1, 0, 0, 1, 0, 0, 1, 0],
+    [0, 0, 1, 0, 0, 1, 0, 0, 1],
+
+    [1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [0, 0, 1, 0, 1, 0, 1, 0, 0],
+  ];
+
+  // Convert board to 1s and 0s, with 1 being the player's moves.
+  const parsedBoard = board.map((cell) => {
+    if (cell === turn) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+
+  for (let i = 0; i < winningBoards.length; i++) {
+    const winningBoard = winningBoards[i];
+    for (let j = 0; j < winningBoard.length; j++) {
+      if (winningBoard[j] !== parsedBoard[j]) {
+        break;
+      }
+      // If we reach the end of the winning board, then player has won.
+      if (j === winningBoard.length - 1) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @desc Updates the game session with the player's move.
+ *
+ * @returns the updated game session
+ */
+export const makeMove = async (req, res) => {
+  try {
+    const { id, pid } = req.params;
+    const { board } = req.body;
+
+    if (!board) {
+      return res.status(400).json({
+        status: "error",
+        message: "No board provided",
+      });
+    }
+
+    if (board.length !== 9) {
+      return res.status(400).json({
+        status: "error",
+        message: "Board must have 9 elements",
+      });
+    }
+
+    const gameSession = await GameSession.findOne({ id });
+
+    if (!gameSession) {
+      return res.status(404).json({
+        status: "error",
+        message: "No game session found with that ID",
+      });
+    }
+
+    if (gameSession.winner) {
+      return res.status(400).json({
+        status: "error",
+        message: "Game is already over",
+      });
+    }
+
+    if (gameSession.board[gameSession.turn - 1] !== pid) {
+      return res.status(400).json({
+        status: "error",
+        message: "It is not yet your turn",
+      });
+    }
+
+    const isValid = isValidMove(board);
+    if (!isValid) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid move",
+      });
+    }
+
+    const isWinning = isWinningBoard(board, gameSession.turn);
+    if (isWinning) {
+      gameSession.winner = pid;
+      await gameSession.save();
+      return res.status(200).json({
+        status: "success",
+        data: {
+          gameSession,
+        },
+      });
+    } else {
+      gameSession.board = board;
+      gameSession.turn = gameSession.turn === 1 ? 2 : 1;
+      await gameSession.save();
+      return res.status(200).json({
+        status: "success",
+        data: {
+          gameSession,
+        },
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({
+      status: "error",
+      message: e,
+    });
+  }
+};
