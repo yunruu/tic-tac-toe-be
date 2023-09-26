@@ -5,14 +5,10 @@ export const createPlayer = async (req, res) => {
   try {
     const player = await Player.create({ ...req.body, id: uuidv4() });
     res.status(201).json({
-      status: "success",
-      data: {
-        player,
-      },
+      player,
     });
   } catch (err) {
     res.status(400).json({
-      status: "fail",
       message: err,
     });
   }
