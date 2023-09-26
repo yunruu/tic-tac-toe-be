@@ -11,6 +11,11 @@ export const checkId = (req, res, next, val) => {
   next();
 };
 
+/**
+ * @desc Join a game session
+ *
+ * @returns A game session that user has joined
+ */
 export const joinSession = async (req, res) => {
   try {
     const gameSession = await GameSession.findOne({
@@ -30,8 +35,9 @@ export const joinSession = async (req, res) => {
           },
         });
       } catch (err) {
+        console.log(err);
         res.status(400).json({
-          status: "fail",
+          status: "error",
           message: err,
         });
       }
@@ -53,9 +59,76 @@ export const joinSession = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     res.status(400).json({
-      status: "fail",
+      status: "error",
       message: err,
+    });
+  }
+};
+
+/**
+ * Leaves a game session
+ *
+ * @returns A game session which the user has left
+ */
+export const leaveSession = async (req, res) => {
+  try {
+    const { id, pid } = req.params;
+    const gameSession = await GameSession.findOne({ id });
+
+    // If game session does not exist, then return error.
+    if (!gameSession) {
+      return res.status(404).json({
+        status: "error",
+        message: "No game session found with that ID",
+      });
+    }
+
+    const [playerOne, playerTwo] = gameSession.players;
+
+    // If both players are in the game session, then the player leaving automatically loses.
+    if (playerOne && playerTwo) {
+      try {
+        gameSession.winner = pid === playerOne ? playerTwo : playerOne;
+        await gameSession.save();
+        return res.status(200).json({
+          status: "success",
+          data: {
+            gameSession,
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        res.status(400).json({
+          status: "error",
+          message: err,
+        });
+      }
+    }
+
+    // If only one player is in the game session, then player leaves and game is still active.
+    try {
+      gameSession.players = [null, null];
+      await gameSession.save();
+      return res.status(200).json({
+        status: "success",
+        data: {
+          gameSession,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(400).json({
+        status: "error",
+        message: err,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({
+      status: "error",
+      message: e,
     });
   }
 };
