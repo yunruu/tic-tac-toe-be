@@ -1,16 +1,6 @@
 import GameSession from "../models/game-session.model.js";
 import { v4 as uuidv4 } from "uuid";
 
-export const checkId = (req, res, next, val) => {
-  if (req.params.id === "1") {
-    return res.status(400).json({
-      status: "error",
-      message: "This is not the correct ID!",
-    });
-  }
-  next();
-};
-
 /**
  * @desc Join a game session. If there is no free active game session,
  * then create a new game session.
