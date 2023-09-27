@@ -264,6 +264,15 @@ export const makeMove = async (req, res) => {
       })
     }
 
+    if (!newBoard.includes(0)) {
+      gameSession.board = newBoard
+      gameSession.winner = 'DRAW'
+      await gameSession.save()
+      return res.status(200).json({
+        gameSession,
+      })
+    }
+
     gameSession.board = newBoard
     gameSession.turn = gameSession.turn === 1 ? 2 : 1
     await gameSession.save()
@@ -279,11 +288,11 @@ export const makeMove = async (req, res) => {
 }
 
 /**
- * @desc Gets the board of the game session.
+ * @desc Retrieve the game session with the request id.
  *
- * @returns the board of the game session
+ * @returns the game session
  */
-export const getBoard = async (req, res) => {
+export const getGame = async (req, res) => {
   try {
     const { id } = req.params
     const gameSession = await GameSession.findOne({ id })
@@ -293,7 +302,7 @@ export const getBoard = async (req, res) => {
       })
     }
     return res.status(200).json({
-      board: gameSession.board,
+      gameSession,
     })
   } catch (e) {
     console.log(e)
