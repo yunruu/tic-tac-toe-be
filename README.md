@@ -1,4 +1,4 @@
-# tic-tac-toe-be
+# Tic-Tac-on-the-Toe
 A server for a simple game of Tic-Tac-Toe with a unique twist – it's designed to be inclusive and accessible to screen reader users.
 
 # Steps to Run Server (on Docker)
