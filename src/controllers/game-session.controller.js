@@ -90,7 +90,7 @@ export const leaveSession = async (req, res) => {
     const gameSession = await GameSession.findOne({ id })
 
     // If game session does not exist, then return error.
-    if (!gameSession || gameSession.winner) {
+    if (!gameSession) {
       return res.status(404).json({
         status: 'error',
         message: 'No active game session found with that ID',
@@ -100,7 +100,7 @@ export const leaveSession = async (req, res) => {
     const [playerOne, playerTwo] = gameSession.players
 
     // If both players are in an active game session, then the player leaving automatically loses.
-    if (playerOne && playerTwo) {
+    if (playerOne && playerTwo && !gameSession.winner) {
       try {
         gameSession.winner = pid === playerOne.pid ? playerTwo.pid : playerOne.pid
         await gameSession.save()
