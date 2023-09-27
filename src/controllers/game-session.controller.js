@@ -1,6 +1,6 @@
-import Player from "../models/player.model.js";
-import GameSession from "../models/game-session.model.js";
-import { v4 as uuidv4 } from "uuid";
+import Player from '../models/player.model.js'
+import GameSession from '../models/game-session.model.js'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * @desc Join a game session. If there is no free active game session,
@@ -10,71 +10,71 @@ import { v4 as uuidv4 } from "uuid";
  */
 export const joinSession = async (req, res) => {
   try {
-    const { pid } = req.body;
-    const username = (await Player.findOne({ id: pid })).username;
+    const { pid } = req.body
+    const username = (await Player.findOne({ id: pid })).username
 
     // Check if player is already in an active game session.
     const playerSession = await GameSession.findOne({
-      players: { $in: [{pid, username}] },
+      players: { $in: [{ pid, username }] },
       winner: { $exists: false },
-    });
+    })
 
     // If player is already in a game session, then return that game session.
     if (playerSession) {
       return res.status(200).json({
         gameSession: playerSession,
-      });
+      })
     }
 
     // Check if there is a free active game session.
     const gameSession = await GameSession.findOne({
       players: { $in: [null] },
-    });
+    })
 
     if (!gameSession) {
       try {
-        const newGameSession = await GameSession.create({ id: uuidv4() });
-        const newPlayers = [{ pid, username }, null];
-        newGameSession.players = newPlayers;
-        await newGameSession.save();
+        const newGameSession = await GameSession.create({ id: uuidv4() })
+        const newPlayers = [{ pid, username }, null]
+        newGameSession.players = newPlayers
+        await newGameSession.save()
         return res.status(201).json({
           gameSession: newGameSession,
-        });
+        })
       } catch (err) {
-        console.log("creating new game session: ", err);
+        console.log('creating new game session: ', err)
         return res.status(400).json({
           message: err,
-        });
+        })
       }
     } else {
       try {
         if (gameSession.players[0] === null) {
-          const newPlayers = [{ pid, username }, null];
-          gameSession.players = newPlayers;
+          const newPlayers = [{ pid, username }, null]
+          gameSession.players = newPlayers
         } else {
-          const newPlayers = [...gameSession.players];
-          newPlayers[1] = { pid, username };
-          gameSession.players = newPlayers;
-          gameSession.turn = 1;
+          const newPlayers = [...gameSession.players]
+          newPlayers[1] = { pid, username }
+          gameSession.players = newPlayers
+          gameSession.turn = 1
         }
-        await gameSession.save();
+        await gameSession.save()
         res.status(200).json({
           gameSession,
-        });
+        })
       } catch (err) {
-        console.log("joining existing game session: ", err);
+        console.log('joining existing game session: ', err)
         res.status(400).json({
           message: err,
-        });
+        })
       }
     }
   } catch (err) {
-    console.log(err);
+    console.log(err)
     res.status(400).json({
       message: err,
-    });
+    })
   }
-};
+}
 
 /**
  * Leaves a game session. If there are two players in the game session,
@@ -86,55 +86,55 @@ export const joinSession = async (req, res) => {
  */
 export const leaveSession = async (req, res) => {
   try {
-    const { id, pid } = req.params;
-    const gameSession = await GameSession.findOne({ id });
+    const { id, pid } = req.params
+    const gameSession = await GameSession.findOne({ id })
 
     // If game session does not exist, then return error.
     if (!gameSession) {
       return res.status(404).json({
-        status: "error",
-        message: "No game session found with that ID",
-      });
+        status: 'error',
+        message: 'No game session found with that ID',
+      })
     }
 
-    const [playerOne, playerTwo] = gameSession.players;
+    const [playerOne, playerTwo] = gameSession.players
 
     // If both players are in the game session, then the player leaving automatically loses.
     if (playerOne && playerTwo) {
       try {
-        gameSession.winner = pid === playerOne.pid ? playerTwo : playerOne;
-        await gameSession.save();
+        gameSession.winner = pid === playerOne.pid ? playerTwo : playerOne
+        await gameSession.save()
         return res.status(200).json({
           gameSession,
-        });
+        })
       } catch (err) {
-        console.log(err);
+        console.log(err)
         return res.status(400).json({
           message: err,
-        });
+        })
       }
     }
 
     // If only one player is in the game session, then player leaves and game is still active.
     try {
-      gameSession.players = [null, null];
-      await gameSession.save();
+      gameSession.players = [null, null]
+      await gameSession.save()
       return res.status(200).json({
         gameSession,
-      });
+      })
     } catch (err) {
-      console.log(err);
+      console.log(err)
       res.status(400).json({
         message: err,
-      });
+      })
     }
   } catch (e) {
-    console.log(e);
+    console.log(e)
     res.status(400).json({
       message: e,
-    });
+    })
   }
-};
+}
 
 /**
  * @desc Checks if the move is valid.
@@ -142,16 +142,24 @@ export const leaveSession = async (req, res) => {
  * @param {Array} board - the game board
  * @returns true if the move is valid, false otherwise
  */
-const isValidMove = (board) => {
-  const oneCount = board.filter((element) => element === 1).length;
-  const twoCount = board.filter((element) => element === 2).length;
+const isValidMove = (board, move) => {
+  const { idx, value } = move
 
-  if (oneCount - twoCount > 1 || twoCount - oneCount > 1) {
-    return false;
+  if (idx < 0 || idx > 8 || board[idx] !== 0) {
+    return false
   }
 
-  return true;
-};
+  const newBoard = [...board]
+  newBoard[idx] = value
+  const oneCount = newBoard.filter((element) => element === 1).length
+  const twoCount = newBoard.filter((element) => element === 2).length
+
+  if (oneCount - twoCount > 1 || twoCount - oneCount > 1) {
+    return false
+  }
+
+  return true
+}
 
 /**
  * @desc Checks if the board is a winning board.
@@ -172,32 +180,32 @@ const isWinningBoard = (board, turn) => {
 
     [1, 0, 0, 0, 1, 0, 0, 0, 1],
     [0, 0, 1, 0, 1, 0, 1, 0, 0],
-  ];
+  ]
 
   // Convert board to 1s and 0s, with 1 being the player's moves.
   const parsedBoard = board.map((cell) => {
     if (cell === turn) {
-      return 1;
+      return 1
     } else {
-      return 0;
+      return 0
     }
-  });
+  })
 
   for (let i = 0; i < winningBoards.length; i++) {
-    const winningBoard = winningBoards[i];
+    const winningBoard = winningBoards[i]
     for (let j = 0; j < winningBoard.length; j++) {
       if (winningBoard[j] !== parsedBoard[j]) {
-        break;
+        break
       }
       // If we reach the end of the winning board, then player has won.
       if (j === winningBoard.length - 1) {
-        return true;
+        return true
       }
     }
   }
 
-  return false;
-};
+  return false
+}
 
 /**
  * @desc Updates the game session with the player's move.
@@ -206,71 +214,75 @@ const isWinningBoard = (board, turn) => {
  */
 export const makeMove = async (req, res) => {
   try {
-    const { id, pid } = req.params;
-    const { board } = req.body;
+    const { id, pid } = req.params
+    const { move } = req.body
 
-    if (!board) {
+    if (!move) {
       return res.status(400).json({
-        message: "No board provided",
-      });
+        message: 'No move provided',
+      })
     }
 
-    if (board.length !== 9) {
+    if (!move.idx && !move.value) {
       return res.status(400).json({
-        message: "Board must have 9 elements",
-      });
+        message: 'Move must have an index and its new value',
+      })
     }
 
-    const gameSession = await GameSession.findOne({ id });
+    const gameSession = await GameSession.findOne({ id })
 
     if (!gameSession) {
       return res.status(404).json({
-        message: "No game session found with that ID",
-      });
+        message: 'No game session found with that ID',
+      })
     }
 
     if (gameSession.winner) {
       return res.status(400).json({
-        message: "Game is already over",
-      });
+        message: 'Game is already over',
+      })
     }
 
-    if (gameSession.board[gameSession.turn - 1] !== pid) {
+    if (gameSession.players[gameSession.turn - 1].id !== pid) {
       return res.status(400).json({
-        status: "error",
-        message: "It is not yet your turn",
-      });
+        status: 'error',
+        message: 'It is not yet your turn',
+      })
     }
 
-    const isValid = isValidMove(board);
+    const isValid = isValidMove(gameSession.board, move)
     if (!isValid) {
       return res.status(400).json({
-        message: "Invalid move",
-      });
+        message: 'Invalid move',
+      })
     }
 
-    const isWinning = isWinningBoard(board, gameSession.turn);
+    // Update board with player's move.
+    const newBoard = [...gameSession.board]
+    newBoard[move.idx] = move.value
+
+    const isWinning = isWinningBoard(newBoard, gameSession.turn)
     if (isWinning) {
-      gameSession.winner = pid;
-      await gameSession.save();
+      gameSession.winner = pid
+      await gameSession.save()
       return res.status(200).json({
         gameSession,
-      });
-    } else {
-      gameSession.board = board;
-      gameSession.turn = gameSession.turn === 1 ? 2 : 1;
-      await gameSession.save();
-      return res.status(200).json({
-        gameSession,
-      });
+      })
     }
+
+    gameSession.board = newBoard
+    gameSession.turn = gameSession.turn === 1 ? 2 : 1
+    await gameSession.save()
+    return res.status(200).json({
+      gameSession,
+    })
   } catch (e) {
-    console.log(e);
+    console.log(e)
     res.status(400).json({
       message: e,
-    });
+    })
   }
-};
+}
 
 /**
  * @desc Gets the board of the game session.
@@ -279,20 +291,20 @@ export const makeMove = async (req, res) => {
  */
 export const getBoard = async (req, res) => {
   try {
-    const { id } = req.params;
-    const gameSession = await GameSession.findOne({ id });
+    const { id } = req.params
+    const gameSession = await GameSession.findOne({ id })
     if (!gameSession) {
       return res.status(404).json({
-        message: "No game session found with that ID",
-      });
+        message: 'No game session found with that ID',
+      })
     }
     return res.status(200).json({
       board: gameSession.board,
-    });
+    })
   } catch (e) {
-    console.log(e);
+    console.log(e)
     res.status(400).json({
       message: e,
-    });
+    })
   }
-};
+}
