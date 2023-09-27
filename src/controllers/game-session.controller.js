@@ -249,9 +249,8 @@ export const makeMove = async (req, res) => {
       })
     }
 
-    if (gameSession.players[gameSession.turn - 1].id !== pid) {
+    if (gameSession.players[gameSession.turn - 1].pid !== pid) {
       return res.status(400).json({
-        status: 'error',
         message: 'It is not yet your turn',
       })
     }
