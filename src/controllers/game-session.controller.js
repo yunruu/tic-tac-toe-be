@@ -97,10 +97,17 @@ export const leaveSession = async (req, res) => {
       })
     }
 
+    // If game is already over, then return.
+    if (gameSession.winner) {
+      return res.status(200).json({
+        message: 'Game is already over',
+      })
+    }
+
     const [playerOne, playerTwo] = gameSession.players
 
     // If both players are in an active game session, then the player leaving automatically loses.
-    if (playerOne && playerTwo && !gameSession.winner) {
+    if (playerOne && playerTwo) {
       try {
         gameSession.winner = pid === playerOne.pid ? playerTwo.pid : playerOne.pid
         await gameSession.save()
