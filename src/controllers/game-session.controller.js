@@ -102,7 +102,7 @@ export const leaveSession = async (req, res) => {
     // If both players are in the game session, then the player leaving automatically loses.
     if (playerOne && playerTwo) {
       try {
-        gameSession.winner = pid === playerOne.pid ? playerTwo : playerOne
+        gameSession.winner = pid === playerOne.pid ? playerTwo.pid : playerOne.pid
         await gameSession.save()
         return res.status(200).json({
           gameSession,
