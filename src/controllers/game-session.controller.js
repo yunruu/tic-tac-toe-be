@@ -160,36 +160,33 @@ const isValidMove = (board, move) => {
  * @returns true if the board is a winning board, false otherwise
  */
 const isWinningBoard = (board, turn) => {
+  // Populate winning boards with the value of player whose turn it is.
   const winningBoards = [
-    [1, 1, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 1, 1],
+    [turn, turn, turn, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, turn, turn, turn, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, turn, turn, turn],
 
-    [1, 0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 1, 0, 0, 1, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0, 1],
+    [turn, 0, 0, turn, 0, 0, turn, 0, 0],
+    [0, turn, 0, 0, turn, 0, 0, turn, 0],
+    [0, 0, turn, 0, 0, turn, 0, 0, turn],
 
-    [1, 0, 0, 0, 1, 0, 0, 0, 1],
-    [0, 0, 1, 0, 1, 0, 1, 0, 0],
+    [turn, 0, 0, 0, turn, 0, 0, 0, turn],
+    [0, 0, turn, 0, turn, 0, turn, 0, 0],
   ]
-
-  // Convert board to 1s and 0s, with 1 being the player's moves.
-  const parsedBoard = board.map((cell) => {
-    if (cell === turn) {
-      return 1
-    } else {
-      return 0
-    }
-  })
 
   for (let i = 0; i < winningBoards.length; i++) {
     const winningBoard = winningBoards[i]
+    let counter = 0
     for (let j = 0; j < winningBoard.length; j++) {
-      if (winningBoard[j] !== parsedBoard[j]) {
-        break
+      if (winningBoard[j] === 0) {
+        continue
       }
-      // If we reach the end of the winning board, then player has won.
-      if (j === winningBoard.length - 1) {
+      // If the board and the winning board match at the same index, add to counter.
+      if (winningBoard[j] === board[j]) {
+        counter++
+      }
+      // If we have 3 matches, then we have a winning board.
+      if (counter >= 3) {
         return true
       }
     }
@@ -259,6 +256,7 @@ export const makeMove = async (req, res) => {
 
     const isWinning = isWinningBoard(newBoard, gameSession.turn)
     if (isWinning) {
+      gameSession.board = newBoard
       gameSession.winner = pid
       await gameSession.save()
       return res.status(200).json({
