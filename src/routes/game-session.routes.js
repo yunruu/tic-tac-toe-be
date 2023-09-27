@@ -1,12 +1,11 @@
-import express from "express";
-import { checkId } from "../controllers/game-session.controller.js";
+import express from 'express'
+import { getGame, joinSession, leaveSession, makeMove } from '../controllers/game-session.controller.js'
 
-const router = express.Router();
+const router = express.Router()
 
-router.param("id", checkId);
+router.route('/').post(joinSession)
+router.route('/:id').get(getGame)
+router.route('/:id/:pid').patch(leaveSession)
+router.route('/board/:id/:pid').patch(makeMove)
 
-router.route("/").get((req, res) => {
-  res.send("This is the game base router.");
-});
-
-export default router;
+export default router

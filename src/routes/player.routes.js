@@ -1,9 +1,8 @@
 import express from "express";
+import { createPlayer } from "../controllers/player.controller.js";
 
 const router = express.Router();
 
-router.route("/").get((req, res) => {
-  res.send("This is the player base router.");
-});
+router.route("/").post(createPlayer);
 
 export default router;
