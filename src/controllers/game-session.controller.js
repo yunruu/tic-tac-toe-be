@@ -12,6 +12,21 @@ export const joinSession = async (req, res) => {
   try {
     const { pid } = req.body;
     const username = (await Player.findOne({ id: pid })).username;
+
+    // Check if player is already in an active game session.
+    const playerSession = await GameSession.findOne({
+      players: { $in: [{pid, username}] },
+      winner: { $exists: false },
+    });
+
+    // If player is already in a game session, then return that game session.
+    if (playerSession) {
+      return res.status(200).json({
+        gameSession: playerSession,
+      });
+    }
+
+    // Check if there is a free active game session.
     const gameSession = await GameSession.findOne({
       players: { $in: [null] },
     });
