@@ -237,6 +237,12 @@ export const makeMove = async (req, res) => {
       })
     }
 
+    if (!gameSession.players[0] || !gameSession.players[1]) {
+      return res.status(400).json({
+        message: 'There are not enough players in the game',
+      })
+    }
+
     if (gameSession.winner) {
       return res.status(400).json({
         message: 'Game is already over',
@@ -279,7 +285,7 @@ export const makeMove = async (req, res) => {
   } catch (e) {
     console.log(e)
     res.status(400).json({
-      message: e,
+      message: e.message,
     })
   }
 }
