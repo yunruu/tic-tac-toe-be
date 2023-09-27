@@ -1,0 +1,27 @@
+services:
+  nodeapp:
+    image: yunruu/tic-tac-on-the-toe:silicon
+    env_file: .env
+    ports:
+      - ${HOST_PORT}:3000
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+    environment:
+      - DATABASE=mongodb://mongodb:${DB_PORT}
+      - PORT=3000
+    networks:
+      - node-webapp-network
+  mongodb:
+    container_name: mongodb
+    image: mongo:6.0
+    volumes:
+      - ~/mongo:/data/db
+    ports:
+      - ${DB_PORT}:27017
+    networks:
+      - node-webapp-network
+networks:
+  node-webapp-network:
+    driver: bridge
