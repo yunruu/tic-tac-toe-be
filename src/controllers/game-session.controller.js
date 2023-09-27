@@ -143,18 +143,9 @@ export const leaveSession = async (req, res) => {
  * @returns true if the move is valid, false otherwise
  */
 const isValidMove = (board, move) => {
-  const { idx, value } = move
+  const { idx } = move
 
   if (idx < 0 || idx > 8 || board[idx] !== 0) {
-    return false
-  }
-
-  const newBoard = [...board]
-  newBoard[idx] = value
-  const oneCount = newBoard.filter((element) => element === 1).length
-  const twoCount = newBoard.filter((element) => element === 2).length
-
-  if (oneCount - twoCount > 1 || twoCount - oneCount > 1) {
     return false
   }
 
