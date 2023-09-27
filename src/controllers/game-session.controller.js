@@ -1,3 +1,4 @@
+import Player from "../models/player.model.js";
 import GameSession from "../models/game-session.model.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -9,6 +10,8 @@ import { v4 as uuidv4 } from "uuid";
  */
 export const joinSession = async (req, res) => {
   try {
+    const { pid } = req.body;
+    const username = (await Player.findOne({ id: pid })).username;
     const gameSession = await GameSession.findOne({
       players: { $in: [null] },
     });
@@ -16,31 +19,39 @@ export const joinSession = async (req, res) => {
     if (!gameSession) {
       try {
         const newGameSession = await GameSession.create({ id: uuidv4() });
-        const newPlayers = [req.body.pid, null];
+        const newPlayers = [{ pid, username }, null];
         newGameSession.players = newPlayers;
         await newGameSession.save();
         return res.status(201).json({
           gameSession: newGameSession,
         });
       } catch (err) {
-        console.log(err);
-        res.status(400).json({
+        console.log("creating new game session: ", err);
+        return res.status(400).json({
           message: err,
         });
       }
     } else {
-      if (gameSession.players[0] === null) {
-        const newPlayers = [req.body.pid, null];
-        gameSession.players = newPlayers;
-      } else {
-        const newPlayers = [...gameSession.players];
-        newPlayers[1] = req.body.pid;
-        gameSession.players = newPlayers;
+      try {
+        if (gameSession.players[0] === null) {
+          const newPlayers = [{ pid, username }, null];
+          gameSession.players = newPlayers;
+        } else {
+          const newPlayers = [...gameSession.players];
+          newPlayers[1] = { pid, username };
+          gameSession.players = newPlayers;
+          gameSession.turn = 1;
+        }
+        await gameSession.save();
+        res.status(200).json({
+          gameSession,
+        });
+      } catch (err) {
+        console.log("joining existing game session: ", err);
+        res.status(400).json({
+          message: err,
+        });
       }
-      await gameSession.save();
-      res.status(200).json({
-        gameSession,
-      });
     }
   } catch (err) {
     console.log(err);
@@ -76,14 +87,14 @@ export const leaveSession = async (req, res) => {
     // If both players are in the game session, then the player leaving automatically loses.
     if (playerOne && playerTwo) {
       try {
-        gameSession.winner = pid === playerOne ? playerTwo : playerOne;
+        gameSession.winner = pid === playerOne.pid ? playerTwo : playerOne;
         await gameSession.save();
         return res.status(200).json({
           gameSession,
         });
       } catch (err) {
         console.log(err);
-        res.status(400).json({
+        return res.status(400).json({
           message: err,
         });
       }
@@ -246,6 +257,11 @@ export const makeMove = async (req, res) => {
   }
 };
 
+/**
+ * @desc Gets the board of the game session.
+ *
+ * @returns the board of the game session
+ */
 export const getBoard = async (req, res) => {
   try {
     const { id } = req.params;
